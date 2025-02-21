@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <title>Chatbot</title>
 <style>
@@ -9,7 +9,9 @@
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-color: #6a0dad;
+    background: url('images.jpg') no-repeat center center fixed;
+    background-size: cover;
+    overflow: hidden;
   }
   
   #chat-container {
@@ -18,48 +20,51 @@
     padding: 20px;
     box-shadow: 1px 2px 5px rgba(13, 11, 11, 0.914);
     width: 400px;
+    position: relative;
   }
-  
   h1 {
     text-align: center;
+    color: white;
     margin-bottom: 20px;
   }
   
   #chat-history {
-    height: 30vh;
-    overflow-y: scroll; /* Fixed Property */
-    padding: 3%;
+    height: 400px;
+    padding: 10px;
+    border-radius: 15px;
+    overflow-y: auto;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .user-message, .bot-message {
+    padding: 10px;
+    border-radius: 10px;
+    margin: 5px 0;
+    max-width: 80%;
   }
   
   .user-message {
-    text-align: right;
-    padding: 10px;
+    align-self: flex-end;
     background-color: #f0f0f0;
-    border-radius: 10px;
-    margin-bottom: 5px;
-    color:black;
   }
   
   .bot-message {
-    text-align: left;
-    padding: 10px;
+    align-self: flex-start;
     background-color: #dbdde5;
-    border-radius: 10px;
-    margin-bottom: 5px;
-    color:black;
   }
   
   form {
     display: flex;
+    margin-top: 10px;
   }
   
   input {
     flex-grow: 1;
-    margin-right: 10px;
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 10px;
-
   }
   
   button {
@@ -72,11 +77,9 @@
   }
 
   #loader {
-    display: none; /* Hide by default */
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    display: none;
+    text-align: center;
+    margin-top: 10px;
   }
 </style>
 </head>
@@ -85,13 +88,12 @@
     <h1>SARA-AI</h1>
     <div id="chat-history"></div>
     <form id="chat-form">
-      <input type="text" id="user-input" placeholder="Enter your Queries">
-      <button type="submit">Send</button> <!-- Fixed button type -->
+      <input type="text" id="user-input" placeholder="Enter your Queries" required>
+      <button type="submit">Send</button>
     </form>
-  </div>
-  
-  <div id="loader">
-    <img src="loader.gif" width="150px" alt="updating...">
+    <div id="loader">
+      <img src="loader.gif" width="50" alt="Loading...">
+    </div>
   </div>
 
   <script>
@@ -101,37 +103,48 @@
     const loader = document.getElementById('loader');
 
     async function sendMessage() {
-      const userMessage = userInput.value;
+      const userMessage = userInput.value.trim();
+      if (!userMessage) return; // Prevent sending empty messages
+
       userInput.value = ''; // Clear input field
 
-      chatHistory.innerHTML += `<div class="user-message">${userMessage}</div>`;
+      // Display user message
+      const userDiv = document.createElement('div');
+      userDiv.className = 'user-message';
+      userDiv.textContent = userMessage;
+      chatHistory.appendChild(userDiv);
+
+      // Show loader
+      loader.style.display = 'block';
 
       try {
         const response = await fetch('/chat', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ userInput: userMessage }), // Ensure backend accepts this format
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userInput: userMessage }),
         });
 
         const data = await response.json();
         const botMessage = data.response;
 
-        chatHistory.innerHTML += `<div class="bot-message">${botMessage}</div>`;
+        // Display bot response
+        const botDiv = document.createElement('div');
+        botDiv.className = 'bot-message';
+        botDiv.textContent = botMessage;
+        chatHistory.appendChild(botDiv);
 
-        // Scroll to the bottom of the chat history
+        // Auto-scroll to latest message
         chatHistory.scrollTop = chatHistory.scrollHeight;
       } catch (error) {
         console.error('Error:', error);
+        alert('Failed to get a response. Please try again.');
       } finally {
-        loader.style.display = 'none'; // Ensure loader is always hidden
+        loader.style.display = 'none'; // Hide loader
       }
     }
 
     form.addEventListener('submit', (event) => {
-      event.preventDefault(); // Prevent form submission
-      loader.style.display = 'block'; // Show the loader
+      event.preventDefault();
       sendMessage();
     });
   </script>
